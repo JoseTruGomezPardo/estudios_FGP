@@ -201,15 +201,22 @@ pub async fn conectar() -> MySqlPool {
 Para gestionar las migraciones, necesitas una pequeña utilidad en tu terminal. Abre tu consola y ejecuta:
 Bash
 
+```
 cargo install sqlx-cli --no-default-features --features mysql
 
 (Esto instalará el comando sqlx preparado específicamente para MySQL).
+
+```
+
 2. Preparar el proyecto
 
 Antes de crear la primera migración, asegúrate de que tu archivo .env tiene la URL correcta y que la base de datos existe (aunque esté vacía). Luego, ejecuta este comando para que SQLx se prepare:
 Bash
 
+```
 sqlx database setup
+
+```
 
 (Esto crea la base de datos si no existe y una tabla especial llamada _sqlx_migrations que sirve para llevar el control de qué cambios ya se han aplicado).
 3. Crear tu primera migración
@@ -217,13 +224,19 @@ sqlx database setup
 Ahora vamos a crear los "planos" para tu tabla de usuarios. Ejecuta:
 Bash
 
+```
+
 sqlx migrate add crear_tabla_usuarios
+
+```
 
 Esto creará una carpeta llamada migrations en la raíz de tu proyecto y dentro verás un archivo con un nombre parecido a este: 202310271030_crear_tabla_usuarios.sql.
 4. Escribir el SQL
 
 Abre ese archivo recién creado y escribe el código SQL para crear tu tabla. Este es el contenido que debería tener:
 SQL
+
+```
 
 -- migrations/[timestamp]_crear_tabla_usuarios.sql
 
@@ -234,6 +247,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     edad INT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+```
+
 
 #### 3.2. Models:
 
