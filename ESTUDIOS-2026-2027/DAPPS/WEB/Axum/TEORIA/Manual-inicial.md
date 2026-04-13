@@ -226,7 +226,7 @@ Bash
 
 ```
 
-sqlx migrate add crear_tabla_usuarios
+sqlx migrate add usuarios
 
 ```
 
