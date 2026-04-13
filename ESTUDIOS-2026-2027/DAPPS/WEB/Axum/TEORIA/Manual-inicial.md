@@ -37,6 +37,8 @@ En Laravel, cambiar el nombre de una columna o un modelo puede ser una pesadilla
 
 - archivo Cargo.toml:
 
+```
+
 *************Contiene los paquetes necesarios*****************
 [package]
 name = "app"
@@ -51,12 +53,17 @@ serde = { version = "1.0", features = ["derive"] } # Fundamental para JSON
 sqlx = { version = "0.8", features = ["runtime-tokio", "mysql", "macros"] }
 dotenvy = "0.15"
 
+```
 
 - archivo .env:
+
+```
 
 *************Es el archivo de la conexión a la bbdd***************
 
 DATABASE_URL=mysql://root:root@localhost:32768/axum
+
+```
 
 
 - archivo main.rs
