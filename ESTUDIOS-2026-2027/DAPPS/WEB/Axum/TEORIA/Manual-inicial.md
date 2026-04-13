@@ -140,3 +140,46 @@ pub use router::request;
 *********** Son aquellos archivos, los cuales sirven para poder exportar los demás archivos que contiene toda la app. **********
 
 ```
+
+## 3. Arquitectura MVC:
+
+#### 3.1. Data:
+
+```
+************** Son los archivos de configuracion y conexion de la bbdd ****************
+
+************** config.rs ****************
+
+use dotenvy::dotenv;
+use std::env;
+
+pub struct Config {
+    pub database_url: String,
+}
+
+impl Config {
+    pub fn from_env() -> Self {
+        dotenv().ok(); // Carga el archivo .env
+        let url = env::var("DATABASE_URL").expect("DATABASE_URL no configurada en .env");
+        Self { database_url: url }
+    }
+}
+
+
+************** database.rs ****************
+
+use sqlx::mysql::MySqlPoolOptions;
+use sqlx::MySqlPool;
+use crate::Data::conf::config::Config;
+
+pub async fn conectar() -> MySqlPool {
+    let config = Config::from_env();
+    
+    MySqlPoolOptions::new()
+        .max_connections(5)
+        .connect(&config.database_url)
+        .await
+        .expect("No se pudo conectar a la base de datos MySQL")
+}
+
+```
