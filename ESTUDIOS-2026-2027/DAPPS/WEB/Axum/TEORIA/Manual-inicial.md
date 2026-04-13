@@ -68,9 +68,10 @@ DATABASE_URL=mysql://root:root@localhost:32768/axum
 
 - archivo main.rs
 
+```
+
 *************Es el archivo principal***************
 
-```
 mod Data;
 mod Controllers;
 mod Models;
