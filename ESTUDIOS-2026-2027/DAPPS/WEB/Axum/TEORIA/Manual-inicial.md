@@ -109,3 +109,34 @@ async fn main() {
 }
 
 ```
+
+- archivo router.rs
+
+```
+
+*********************Es el archivo de enrrutamiento********************************
+
+use crate::Controllers; // <--- 'crate' busca la carpeta Controllers desde la raíz de src
+use axum::{routing::get, Router};
+use std::sync::Arc;
+use sqlx::MySqlPool;
+
+pub fn request(estado: Arc<MySqlPool>) -> Router {
+    Router::new()
+        .route("/usuarios", get(Controllers::get_usuarios_controller::obtener_usuarios))
+        .with_state(estado)
+}
+
+```
+
+- archivos mod.rs
+
+```
+pub mod router;
+
+// Re-exportamos la función 'request' para que sea accesible
+pub use router::request;
+
+*********** Son aquellos archivos, los cuales sirven para poder exportar los demás archivos que contiene toda la app. **********
+
+```
