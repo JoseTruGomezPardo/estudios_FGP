@@ -1,6 +1,6 @@
 ## 1. INTRODUCCIÓN:
 
-Elejimos Axum, porque es un framework más potente que laravel y más compatible con Tauri.
+Elegimos Axum, porque es un framework más potente que laravel y más compatible con Tauri.
 
 1. Rendimiento y Concurrencia Extremos
 
@@ -52,6 +52,8 @@ tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] } # Fundamental para JSON
 sqlx = { version = "0.8", features = ["runtime-tokio", "mysql", "macros"] }
 dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 ```
 
@@ -81,28 +83,33 @@ use std::sync::Arc;
 
 #[tokio::main]
 async fn main() {
-    // 1. Llama a tu función personalizada para abrir la conexión con la DB (MySQL/SQLite).
+    // 1. Inicializa el sistema de logs
+    // Esto permite que veamos por consola qué está pasando en el servidor.
+    tracing_subscriber::fmt()
+        .with_env_filter("app=debug,axum=info") // Define el nivel de detalle
+        .init();
+    // 2. Llama a tu función personalizada para abrir la conexión con la DB (MySQL/SQLite).
     // Usamos .await porque conectar a una base de datos toma tiempo y no queremos bloquear el programa.
     let pool = Data::database::conectar().await;
-    // 2. Envolvemos la conexión en un "Arc" (Atomic Reference Counted).
+    // 3. Envolvemos la conexión en un "Arc" (Atomic Reference Counted).
     // Esto permite que la conexión se comparta de forma segura entre todos los hilos 
     // del servidor; así, cada petición que llegue puede usar la misma base de datos.
     let compartido = Arc::new(pool);
 
-    // 3. Llamamos a tu función de enrutamiento pasando la conexión (el estado).
+    // 4. Llamamos a tu función de enrutamiento pasando la conexión (el estado).
     // Aquí es donde se configuran qué URLs (como /usuarios) van a qué controladores.
     // 'app' ahora contiene toda la lógica de rutas de tu servidor.
     let app = Router::request(compartido);
 
-    // 4. Creamos un "escuchador" (listener) de red.
+    // 5. Creamos un "escuchador" (listener) de red.
     // Le decimos al sistema operativo que reserve el puerto 3000 en la IP local (127.0.0.1)
     // para que nuestra aplicación pueda recibir tráfico ahí.
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
 
-    // 5. Un simple mensaje en consola para que sepas que todo ha arrancado correctamente.
+    // 6. Un simple mensaje en consola para que sepas que todo ha arrancado correctamente.
     println!("🚀 Servidor corriendo en http://localhost:3000");
     
-    // 6. Ponemos el servidor en marcha.
+    // 7. Ponemos el servidor en marcha.
     // Esta función se queda "escuchando" indefinidamente, pasando cada conexión 
     // que llega a nuestro sistema de rutas ('app').
     axum::serve(listener, app).await.unwrap();
@@ -143,9 +150,12 @@ pub use router::request;
 
 ## 3. Arquitectura MVC:
 
-#### 3.1. Data:
+#### 3.1. Database y migraciones:
+
+##### A. Database
 
 ```
+
 ************** Son los archivos de configuracion y conexion de la bbdd ****************
 
 ************** config.rs ****************
@@ -184,6 +194,46 @@ pub async fn conectar() -> MySqlPool {
 
 ```
 
+##### B. Migraciones
+
+1. Instalar la herramienta de SQLx (CLI)
+
+Para gestionar las migraciones, necesitas una pequeña utilidad en tu terminal. Abre tu consola y ejecuta:
+Bash
+
+cargo install sqlx-cli --no-default-features --features mysql
+
+(Esto instalará el comando sqlx preparado específicamente para MySQL).
+2. Preparar el proyecto
+
+Antes de crear la primera migración, asegúrate de que tu archivo .env tiene la URL correcta y que la base de datos existe (aunque esté vacía). Luego, ejecuta este comando para que SQLx se prepare:
+Bash
+
+sqlx database setup
+
+(Esto crea la base de datos si no existe y una tabla especial llamada _sqlx_migrations que sirve para llevar el control de qué cambios ya se han aplicado).
+3. Crear tu primera migración
+
+Ahora vamos a crear los "planos" para tu tabla de usuarios. Ejecuta:
+Bash
+
+sqlx migrate add crear_tabla_usuarios
+
+Esto creará una carpeta llamada migrations en la raíz de tu proyecto y dentro verás un archivo con un nombre parecido a este: 202310271030_crear_tabla_usuarios.sql.
+4. Escribir el SQL
+
+Abre ese archivo recién creado y escribe el código SQL para crear tu tabla. Este es el contenido que debería tener:
+SQL
+
+-- migrations/[timestamp]_crear_tabla_usuarios.sql
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100),
+    apellidos VARCHAR(100),
+    edad INT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 #### 3.2. Models:
 
@@ -246,6 +296,24 @@ pub async fn obtener_usuarios(
     }
 }
 
+
+
+```
+
+#### 3.4. El Middleware de CORS:
+
+```
+
+************************* Configuración de CORS ***************************
+// Define una política de seguridad que permite la comunicación entre el 
+// frontend (Tauri/Navegador) y este backend. Sin esto, el navegador 
+// bloquearía las peticiones por seguridad al venir de puertos distintos.
+
+let cors = CorsLayer::new()
+        .allow_origin(Any)       // Acepta peticiones desde cualquier origen
+        .allow_methods(Any)      // Permite todos los verbos HTTP (GET, POST, etc.)
+        .allow_headers(Any);     // Permite enviar cualquier cabecera en la petición
+***************************************************************************
 
 
 ```
