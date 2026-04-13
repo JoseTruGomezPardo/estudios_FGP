@@ -204,9 +204,9 @@ Bash
 ```
 cargo install sqlx-cli --no-default-features --features mysql
 
-(Esto instalará el comando sqlx preparado específicamente para MySQL).
-
 ```
+
+(Esto instalará el comando sqlx preparado específicamente para MySQL).
 
 2. Preparar el proyecto
 
